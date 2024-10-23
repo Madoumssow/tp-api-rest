@@ -1,0 +1,198 @@
+/************************************ TP API REST *********************************************\
+Instructions
+
+Démarrer un nouveau projet Node JS avec npm init.
+Installer Mongoose, Express et .env.
+Configurer les variables d'environnement avec .env.
+Lancer un serveur avec Express dans le fichier server.js.
+Connecter votre base de données localement ou avec Mongo Atlas.
+La structure des dossiers devrait être comme ceci :
+
+Copier
+
+config/ .env server.js
+
+Créer un dossier models et un fichier User.js à l'intérieur.
+Dans User.js, définir un schéma Mongoose et exporter le modèle. Vous l'utiliserez dans server.js.
+La structure des dossiers devrait être comme ceci :
+
+Copier
+
+config/ .env models/User.js server.js
+
+Dans server.js, créer quatre routes :
+GET : RETOURNER TOUS LES UTILISATEURS
+POST : AJOUTER UN NOUVEAU UTILISATEUR À LA BASE DE DONNÉES
+PUT : ÉDITER UN UTILISATEUR PAR ID
+DELETE : SUPPRIMER UN UTILISATEUR PAR ID
+Utiliser Postman pour tester chaque route.
+Liens utiles :
+
+.env : https://www.npmjs.com/package/dotenv
+Express.js : https://expressjs.com/
+req.params && req.query : https://coursework.vschool.io/express-params-and-query/
+Mongoose : https://mongoosejs.com/
+REST API : https://www.youtube.com/watch?v=SLwpqD8n3d0
+
+/************************************ TP RESOLUTIONS DU PROBLEMES *********************************************\
+
+ChatGPT said:
+ChatGPT
+Memory updated
+Voici les étapes pour configurer le projet Node.js avec Mongoose, Express, et .env :
+
+Étape 1 : Initialiser le projet Node.js
+Dans votre terminal, créez un nouveau dossier pour votre projet et initialisez un projet Node.js :
+
+        mkdir mon-projet
+        cd mon-projet
+        npm init -y
+
+Étape 2 : Installer les dépendances
+Installez Express, Mongoose, et dotenv :
+
+        npm install express mongoose dotenv
+
+Étape 3 : Configurer les variables d'environnement
+Créez un fichier .env à la racine de votre projet et ajoutez-y vos variables d'environnement, comme l'URI MongoDB :
+
+        perl
+        Copy code
+        MONGO_URI=mongodb+srv://votre-utilisateur:votre-motdepasse@cluster.mongodb.net/ma-base-de-donnees
+        PORT=5000
+
+Étape 4 : Configurer Mongoose et Express dans server.js
+Créez un fichier server.js à la racine de votre projet. Voici un exemple de configuration de base pour lancer un serveur Express et se connecter à MongoDB :
+
+        // server.js
+        const express = require('express');
+        const mongoose = require('mongoose');
+        const dotenv = require('dotenv');
+
+        // Charger les variables d'environnement
+        dotenv.config();
+
+        const app = express();
+        const port = process.env.PORT || 5000;
+
+        // Middleware pour analyser les données JSON
+        app.use(express.json());
+
+        // Connexion à MongoDB
+        mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+        .then(() => console.log('MongoDB connected'))
+        .catch(err => console.error('MongoDB connection error:', err));
+
+        // Routes de base
+        app.get('/', (req, res) => {
+        res.send('Bienvenue sur notre API');
+        });
+
+        // Lancer le serveur
+        app.listen(port, () => {
+        console.log(`Serveur lancé sur le port ${port}`);
+        });
+
+Étape 5 : Créer le modèle User
+Créez un dossier models/ et un fichier User.js dedans. Définissez un schéma Mongoose pour les utilisateurs :
+
+        // models/User.js
+        const mongoose = require('mongoose');
+
+        const userSchema = new mongoose.Schema({
+        name: {
+            type: String,
+            required: true,
+        },
+        email: {
+            type: String,
+            required: true,
+            unique: true,
+        },
+        age: Number,
+        });
+        module.exports = mongoose.model('User', userSchema);
+
+Étape 6 : Ajouter des routes CRUD dans server.js
+Dans server.js, importez le modèle User et configurez les routes GET, POST, PUT, DELETE :
+
+        // Importer le modèle User
+        const User = require('./models/User');
+
+        // Route GET : Retourner tous les utilisateurs
+        app.get('/users', async (req, res) => {
+        try {
+            const users = await User.find();
+            res.json(users);
+        } catch (error) {
+            res.status(500).json({ message: 'Erreur lors de la récupération des utilisateurs' });
+        }
+        });
+
+        // Route POST : Ajouter un nouvel utilisateur
+        app.post('/users', async (req, res) => {
+        const { name, email, age } = req.body;
+
+        try {
+            const newUser = new User({ name, email, age });
+            await newUser.save();
+            res.status(201).json(newUser);
+        } catch (error) {
+            res.status(400).json({ message: 'Erreur lors de l’ajout de l’utilisateur' });
+        }
+        });
+
+        // Route PUT : Éditer un utilisateur par ID
+        app.put('/users/:id', async (req, res) => {
+        const { id } = req.params;
+        const { name, email, age } = req.body;
+
+        try {
+            const updatedUser = await User.findByIdAndUpdate(id, { name, email, age }, { new: true });
+            res.json(updatedUser);
+        } catch (error) {
+            res.status(400).json({ message: 'Erreur lors de la mise à jour de l’utilisateur' });
+        }
+        });
+
+        // Route DELETE : Supprimer un utilisateur par ID
+        app.delete('/users/:id', async (req, res) => {
+        const { id } = req.params;
+
+        try {
+            await User.findByIdAndDelete(id);
+            res.json({ message: 'Utilisateur supprimé avec succès' });
+        } catch (error) {
+            res.status(400).json({ message: 'Erreur lors de la suppression de l’utilisateur' });
+        }
+        });
+
+Étape 7 : Tester les routes avec Postman
+GET : http://localhost:5000/users pour obtenir tous les utilisateurs.
+POST : http://localhost:5000/users avec un body JSON pour ajouter un utilisateur :
+
+        {
+        "name": "John Doe",
+        "email": "john@example.com",
+        "age": 30
+        }
+
+PUT : http://localhost:5000/users/:id pour mettre à jour un utilisateur.
+DELETE : http://localhost:5000/users/:id pour supprimer un utilisateur.
+
+Structure finale du projet
+arduino
+
+config/
+models/
+  User.js
+.env
+server.js
+
+Votre projet est maintenant configuré pour gérer une API REST avec MongoDB, Express, et Mongoose.
+
+
+
+
+
+
